@@ -105,6 +105,38 @@ def isTerminal(state):
         return True
     return False
 
+def utility(state):
+    if isTerminal(state) and (state[1] == 1 or state[2] == 1 or state[3] == 1):
+        return 1
+    elif isTerminal(state) and (state[7] == -1 or state[8] == -1 or state[9] == -1):
+        return 0
+    else:
+        return .5
+
+def minValue(state):
+    if isTerminal(state):
+        return (utility(state), None)
+    pair = (float('inf'), None)
+    for a in actions(state):
+        pair2 = maxValue(result(state, a))
+        if pair2[0] < pair[0]:
+            pair = (pair2[0], a)
+    return pair
+
+def maxValue(state):
+    if isTerminal(state):
+        return (utility(state), None)
+    pair = (float('-inf'), None)
+    for a in actions(state):
+        pair2 = minValue(result(state, a))
+        if pair2[0] > pair[0]:
+            pair = (pair2[0], a)
+    return pair
+
+def miniMaxSearch(state):
+    pair = maxValue(state)
+    return pair[1]
+
 if __name__ == "__main__":
-    s = [1, -1, 0, 0, 1, 0, -1, 0, 0, 1]
-    print(isTerminal(s))
+    s = [1, -1, -1, -1, 0, 0, 0, 1, 1, 1]
+    print(miniMaxSearch(s))
