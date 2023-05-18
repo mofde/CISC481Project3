@@ -1,4 +1,6 @@
 import numpy as np
+import random
+import math
 
 s0 = [0, -1, -1, -1, 0, 0, 0, 1, 1, 1]
 
@@ -110,8 +112,9 @@ def utility(state):
         return 1
     elif isTerminal(state) and (state[7] == -1 or state[8] == -1 or state[9] == -1):
         return 0
-    else:
+    elif isTerminal(state):
         return .5
+    return 0
 
 def minValue(state):
     if isTerminal(state):
@@ -137,6 +140,38 @@ def miniMaxSearch(state):
     pair = maxValue(state)
     return pair[1]
 
-if __name__ == "__main__":
-    s = [1, -1, -1, -1, 0, 0, 0, 1, 1, 1]
-    print(miniMaxSearch(s))
+class NetworkLayer:
+    def __init__(self, neurons, inputs, a_fn, a_fn_derivative):
+        self.a_fn = a_fn
+        self.a_fn_derivative = a_fn_derivative
+        self.biases = [random.random() for neuron in range(neurons)]
+        self.weights = [[random.random() for input in range(inputs)] for neuron in range(neurons)]
+
+def sigmoid(inputSum):
+    return 1/(1 + math.exp(-1 * inputSum))
+
+def reLU(inputSum):
+    return max(0, inputSum)
+
+#networkLayers is a list of the class NetworkLayer
+def classify(networkLayers, *inputs):
+    outputs = np.array(inputs)
+    allOutputs = []
+    for networkLayer in networkLayers:
+        inputs = outputs
+        outputs = []
+        for neuronIndex in len(range(networkLayer.neurons)):
+            inputSum = 0
+            for inputIndex in len(range(inputs)):
+                inputSum += inputs[inputIndex] * networkLayer.weights[neuronIndex][inputIndex]
+            inputSum += networkLayer.biases[neuronIndex]
+            output = networkLayer.a_fn(inputSum)
+            outputs.append(output)
+        allOutputs.append(outputs)
+    return (outputs, allOutputs)
+
+#if __name__ == "__main__":
+    #s = [0, -1, -1, -1, 0, 0, 0, 1, 1, 1]
+
+    #network = Network([1, 2, 3], inputs, a_fn, a_fn_prime)
+    #classify(graph, [[3, 5], [5, 1], [10, 2]])
