@@ -141,37 +141,74 @@ def miniMaxSearch(state):
     return pair[1]
 
 class NetworkLayer:
-    def __init__(self, neurons, inputs, a_fn, a_fn_derivative):
-        self.a_fn = a_fn
-        self.a_fn_derivative = a_fn_derivative
-        self.biases = [random.random() for neuron in range(neurons)]
-        self.weights = [[random.random() for input in range(inputs)] for neuron in range(neurons)]
+    def __init__(self, numNeurons, inputs, activationFunction, activationFunctionDerivative):
+        self.activationFunction = activationFunction
+        self.activationFunctionDerivative = activationFunctionDerivative
+        self.numNeurons = numNeurons
+        self.inputs = inputs
+        self.biases = [random.randint(-1, 1) for n in range(numNeurons)]
+        self.weights = [[random.randint(-1, 1) for input in range(len(inputs))] for n in range(numNeurons)]
 
 def sigmoid(inputSum):
     return 1/(1 + math.exp(-1 * inputSum))
 
+def sigmoidDerivative(inputSum):
+    return sigmoid(inputSum) * (1 - sigmoid(inputSum))
+
 def reLU(inputSum):
     return max(0, inputSum)
 
-#networkLayers is a list of the class NetworkLayer
-def classify(networkLayers, *inputs):
-    outputs = np.array(inputs)
-    allOutputs = []
+def reLUDerivative(inputSum):
+    if inputSum < 0:
+        return 0
+    else:
+        return 1
+
+def classify(networkLayers, inputs):
+    outputs = inputs
+    #allOutputs = []
     for networkLayer in networkLayers:
         inputs = outputs
+        networkLayer.inputs = inputs
         outputs = []
-        for neuronIndex in len(range(networkLayer.neurons)):
+        for neuronIndex in range(networkLayer.numNeurons):
             inputSum = 0
-            for inputIndex in len(range(inputs)):
+            for inputIndex in range(len(inputs)):
                 inputSum += inputs[inputIndex] * networkLayer.weights[neuronIndex][inputIndex]
             inputSum += networkLayer.biases[neuronIndex]
-            output = networkLayer.a_fn(inputSum)
+            if networkLayer.activationFunction == "sigmoid":
+                output = sigmoid(inputSum)
+            elif networkLayer.activationFunction == "reLU":
+                output = reLU(inputSum)
             outputs.append(output)
-        allOutputs.append(outputs)
-    return (outputs, allOutputs)
+        #allOutputs.append(outputs)
+    return outputs
+    #return (outputs, allOutputs)
 
-#if __name__ == "__main__":
-    #s = [0, -1, -1, -1, 0, 0, 0, 1, 1, 1]
+def updateWeights(networkLayers, expectedOutputs):
+    calculatedOutputs = classify(networkLayers, networkLayers[0].inputs)
+    errorDeltas = [None] * (len(networkLayers) * len(networkLayers[0].inputs))
+    for layerIndex in reversed(range(len(networkLayers))):
+        for inputIndex in range(len(networkLayers[layerIndex].inputs)):
+            if layerIndex == len(networkLayers) - 1:
+                if networkLayers[layerIndex].activationFunctionDerivative == "sigmoidDerivative":
+                    networkLayerDeltaError = 2 * (calculatedOutputs[inputIndex] - expectedOutputs[inputIndex]) * sigmoidDerivative(networkLayers[layerIndex].inputs[inputIndex])
+                elif networkLayers[layerIndex].activationFunctionDerviative == "reLUDerivative":
+                    networkLayerDeltaError = 2 * (calculatedOutputs[inputIndex] - expectedOutputs[inputIndex]) * reLUDerivative(networkLayers[layerIndex].inputs[inputIndex])
+            else:
+                networkLayerDeltaError = 0
+                for neuronIndex in len(range(networkLayers[layerIndex].numNeurons)):
+                    if networkLayers[layerIndex].activationFunctionDerivative == "sigmoidDerivative":
+                        networkLayerDeltaError += errorDeltas[(layerIndex + 1) * len(networkLayers[0].inputs) + neuronIndex] * networkLayers[layerIndex].weights[neuronIndex][inputIndex] * sigmoidDerivative(networkLayers[layerIndex].inputs[inputIndex])
+                    elif networkLayers[layerIndex].activationFunctionDerivative == "reLUDerivative":
+                        networkLayerDeltaError += errorDeltas[(layerIndex + 1) * len(networkLayers[0].inputs) + neuronIndex] * networkLayers[layerIndex].weights[neuronIndex][inputIndex] * reLUDerivative(networkLayers[layerIndex].inputs[inputIndex])
+            errorDeltas.insert(layerIndex * len(networkLayers[0].inputs) + inputIndex, networkLayerDeltaError)
+    return errorDeltas
 
-    #network = Network([1, 2, 3], inputs, a_fn, a_fn_prime)
-    #classify(graph, [[3, 5], [5, 1], [10, 2]])
+def hexaspaunNetwork():
+    networkLayer = NetworkLayer(10, [None, None, None, None, None, None, None, None, None, None], "reLU", "reLUDerivative")
+    print(networkLayer.weights)
+    print(classify([networkLayer], s0))
+
+if __name__ == "__main__":
+    hexaspaunNetwork()
