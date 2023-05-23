@@ -172,9 +172,9 @@ def classify(networkLayers, allInputs):
             inputs = latestOutputs
             networkLayer.inputs = inputs
             latestOutputs = []
-            for neuronIndex in range(len(networkLayer.inputs) - networkLayer.numNeurons, networkLayer.numNeurons):
+            for neuronIndex in range(networkLayer.numNeurons):
                 inputSum = 0
-                for inputIndex in range(len(networkLayer.inputs)):
+                for inputIndex in range(1, len(networkLayer.inputs)):
                     inputSum += inputs[inputIndex] * networkLayer.weights[neuronIndex][inputIndex]
                 inputSum += networkLayer.biases[neuronIndex]
                 if networkLayer.activationFunction == "sigmoid":
@@ -214,15 +214,9 @@ def hexaspawnNetwork():
     networkLayer1 = NetworkLayer(9, [None, None, None, None, None, None, None, None, None, None], "reLU", "reLUDerivative")
     networkLayer2 = NetworkLayer(9, [None, None, None, None, None, None, None, None, None, None], "sigmoid", "sigmoidDerivative")
     print(classify([networkLayer1, networkLayer2], [s0]))
-    networkLayer1.inputs = [s0]
-    updateWeights([networkLayer1, networkLayer2], [[-1, -1, -1, 1, 0, 0, 0, 1, 1]])
+    #networkLayer1.inputs = [s0]
+    #updateWeights([networkLayer1, networkLayer2], [[-1, -1, -1, 1, 0, 0, 0, 1, 1]])
     
 
 if __name__ == "__main__":
-    #hexaspawnNetwork()
-
-    #Tests
-    sigmoidTest = NetworkLayer(2, [[0, 0], [0, 1], [1, 0], [1, 1]], "sigmoid", "sigmoidDerivative")
-    print(updateWeights([sigmoidTest], [[0, 0], [0, 1], [0, 1], [1, 0]]))
-    reLUTest = NetworkLayer(2, [[0, 0], [0, 1], [1, 0], [1, 1]], "reLU", "reLUDerivative")
-    print(updateWeights([reLUTest], [[0, 0], [0, 1], [0, 1], [1, 0]]))
+    hexaspawnNetwork()
