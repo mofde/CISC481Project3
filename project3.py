@@ -2,7 +2,7 @@ import numpy as np
 import random
 import math
 
-s0 = [0, -1, -1, -1, 0, 0, 0, 1, 1, 1]
+s0 = [1, -1, -1, -1, 0, 0, 0, 1, 1, 1]
 
 def createBoard(state):
     oneDBoard = []
@@ -187,10 +187,10 @@ def classify(networkLayers, allInputs):
 
 def updateWeights(networkLayers, expectedOutputs):
     calculatedOutputs = classify(networkLayers, networkLayers[0].inputs)
-    errorDeltas = [None] * (len(networkLayers) * (len(networkLayers[0].inputs)))
+    errorDeltas = [0] * (len(networkLayers) * (len(networkLayers[0].inputs) - 1))
     for outputsIndex in range(len(expectedOutputs)):
         for layerIndex in reversed(range(len(networkLayers))):
-            for inputIndex in range(len(networkLayers[layerIndex].inputs)):
+            for inputIndex in range(len(networkLayers[layerIndex].inputs) - 1):
                 if layerIndex == len(networkLayers) - 1:
                     if networkLayers[layerIndex].activationFunctionDerivative == "sigmoidDerivative":
                         networkLayerDeltaError = 2 * (calculatedOutputs[outputsIndex][inputIndex] - expectedOutputs[outputsIndex][inputIndex]) * sigmoidDerivative(networkLayers[layerIndex].inputs[inputIndex])
@@ -205,18 +205,81 @@ def updateWeights(networkLayers, expectedOutputs):
                             networkLayerDeltaError += errorDeltas[(layerIndex + 1) * len(networkLayers[layerIndex].inputs) + neuronIndex] * networkLayers[layerIndex].weights[neuronIndex][inputIndex] * reLUDerivative(networkLayers[layerIndex].inputs[inputIndex])
                 errorDeltas.insert(layerIndex * len(networkLayers[layerIndex].inputs) + inputIndex, networkLayerDeltaError)
         for networkLayer in networkLayers:
-            for inputIndex in range(1, len(networkLayer.inputs)):
+            for inputIndex in range(len(networkLayer.inputs) - 1):
                 for neuronIndex in range(networkLayer.numNeurons):
-                    networkLayer.weights[inputIndex][neuronIndex] += errorDeltas[layerIndex * len(networkLayers[0].inputs) + inputIndex]
-    return None
+                    networkLayer.weights[inputIndex][neuronIndex] += errorDeltas[layerIndex * (len(networkLayers[0].inputs) - 1) + inputIndex]
+    #print("Weights: ")
+    #print(networkLayer.weights)
 
-def hexaspawnNetwork():
-    networkLayer1 = NetworkLayer(9, [None, None, None, None, None, None, None, None, None, None], "reLU", "reLUDerivative")
+def hexaspawnNetwork(state):
+    global networkExpectedOutputs
+    networkLayer = NetworkLayer(9, [None, None, None, None, None, None, None, None, None, None], "sigmoid", "sigmoidDerivative")
     networkLayer2 = NetworkLayer(9, [None, None, None, None, None, None, None, None, None, None], "sigmoid", "sigmoidDerivative")
-    print(classify([networkLayer1, networkLayer2], [s0]))
-    #networkLayer1.inputs = [s0]
-    #updateWeights([networkLayer1, networkLayer2], [[-1, -1, -1, 1, 0, 0, 0, 1, 1]])
-    
+    print("Calculated Outputs from the Hexaspawn Network:")
+    print(classify([networkLayer, networkLayer2], [state]))
+    networkLayer.inputs = [state]
+    action = miniMaxSearch(state)
+    board = createBoard(state)
+    expectedOutputs = []
+    if action == "up":
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i][j] == 0 and board[i+1][j] == 1:
+                    expectedOutputs.append(1)
+                else:
+                    expectedOutputs.append(0)
+    elif action == "down":
+        for i in len(board):
+            for j in len(board[i]):
+                if board[i-1][j] == -1 and board[i][j] == 0:
+                    expectedOutputs.append(1)
+                else:
+                    expectedOutputs.append(0)
+    elif action == "down-right":
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i-1][j-1] == -1 and board[i][j] == 1:
+                    expectedOutputs.append(1)
+                else:
+                    expectedOutputs.append(0)
+    elif action == "down-left":
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i-1][j+1] == -1 and board[i][j] == 1:
+                    expectedOutputs.append(1)
+                else:
+                    expectedOutputs.append(0)
+    elif action == "up-right":
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i+1][j-1] == 1 and board[i][j] == -1:
+                    expectedOutputs.append(1)
+                else:
+                    expectedOutputs.append(0)
+    elif action == "up-left":
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i+1][j+1] == 1 and board[i][j] == -1:
+                    expectedOutputs.append(1)
+                else:
+                    expectedOutputs.append(0)
+    print("Expected Outputs from the Hexaspawn Network:")
+    print(expectedOutputs)
+    updateWeights([networkLayer], [expectedOutputs])
 
 if __name__ == "__main__":
-    hexaspawnNetwork()
+    #sigmoid Test from Table 1
+    #networkLayer1 = NetworkLayer(2, [None, None], "sigmoid", "sigmoidDerivative")
+    #print("Calculated Outputs from the sigmoid test:")
+    #print(classify([networkLayer1], [[0, 0], [0, 1], [1, 1], [0, 1]]))
+    #networkLayer1.inputs = [[0, 0], [0, 1], [1, 1], [0, 1]]
+    #updateWeights([networkLayer1], [[0, 0], [0, 1], [0, 1], [1, 0]])
+    #reLU Test from Table 1
+    #networkLayer2 = NetworkLayer(2, [None, None], "reLU", "reLUDerivative")
+    #print("Calculated Outputs from the reLU test:")
+    #print(classify([networkLayer2], [[0, 0], [0, 1], [1, 1], [0, 1]]))
+    #networkLayer2.inputs = [[0, 0], [0, 1], [1, 1], [0, 1]]
+    #updateWeights([networkLayer2], [[0, 0], [0, 1], [0, 1], [1, 0]])
+
+    #hexaspawn network
+    hexaspawnNetwork([1, -1, -1, -1, 0, 0, 0, 1, 1, 1])
